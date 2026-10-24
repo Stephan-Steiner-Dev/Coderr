@@ -3,7 +3,7 @@ from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 
-from offers_app.models import Offer
+from offers_app.models import Offer, OfferDetail
 from .filters import OfferFilters
 from .pagination import OfferPagination
 from .permissions import IsBusinessUser, IsOfferOwner
@@ -12,6 +12,7 @@ from .serializers import (
     OfferCreateSerializer,
     OfferRetrieveSerializer,
     OfferUpdateSerializer,
+    OfferDetailCreateSerializer
 )
 
 
@@ -75,3 +76,11 @@ class OfferDetailView(generics.RetrieveUpdateDestroyAPIView):
                     "Only the offer owner can modify this offer."
                 )
         return offer
+
+
+class OfferDetailItemView(generics.RetrieveAPIView):
+    """Retrieve a single offer detail."""
+
+    queryset = OfferDetail.objects.all()
+    serializer_class = OfferDetailCreateSerializer
+    permission_classes = [IsAuthenticated]

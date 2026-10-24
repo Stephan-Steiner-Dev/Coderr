@@ -333,3 +333,60 @@ class OfferDetailTests(APITestCase):
         self.assertTrue(
             Offer.objects.filter(pk=self.offer.pk).exists()
         )
+
+
+class OfferDetailItemTests(APITestCase):
+    """Test retrieving a single offer detail."""
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="testuser",
+            password="TestPassword123!"
+        )
+        offer = Offer.objects.create(
+            user=self.user,
+            title="Website Design",
+            description="Professional website design"
+        )
+        self.detail = OfferDetail.objects.create(
+            offer=offer,
+            title="Basic Website",
+            revisions=2,
+            delivery_time_in_days=7,
+            price=100,
+            features=["Responsive Design"],
+            offer_type="basic"
+        )
+        self.url = reverse(
+            "offer-detail-item",
+            kwargs={"pk": self.detail.pk}
+        )
+
+    def test_authenticated_user_can_get_detail(self):
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], self.detail.id)
+        self.assertEqual(response.data["title"], "Basic Website")
+        self.assertEqual(response.data["offer_type"], "basic")
+
+    def test_unauthenticated_user_cannot_get_detail(self):
+        response = self.client.get(self.url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_401_UNAUTHORIZED
+        )
+
+    def test_nonexistent_detail_returns_404(self):
+        self.client.force_authenticate(user=self.user)
+        url = reverse("offer-detail-item", kwargs={"pk": 99999})
+
+        response = self.client.get(url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_404_NOT_FOUND
+        )
