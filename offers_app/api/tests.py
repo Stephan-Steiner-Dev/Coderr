@@ -1,3 +1,4 @@
+"""Tests for offer API endpoints."""
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -12,6 +13,7 @@ class OfferListTests(APITestCase):
     """Test the offer list endpoint."""
 
     def setUp(self):
+        """Prepare shared data for this test case."""
         self.user = get_user_model().objects.create_user(
             username="testbusiness",
             first_name="John",
@@ -20,6 +22,7 @@ class OfferListTests(APITestCase):
         self.url = reverse("offer-list")
 
     def create_offer(self):
+        """Create offer."""
         return Offer.objects.create(
             user=self.user,
             title="Website Design",
@@ -27,6 +30,7 @@ class OfferListTests(APITestCase):
         )
 
     def create_offer_detail(self, offer, offer_type, price, days):
+        """Create offer detail."""
         return OfferDetail.objects.create(
             offer=offer,
             title=offer_type.title(),
@@ -38,6 +42,7 @@ class OfferListTests(APITestCase):
         )
 
     def create_offer_details(self, offer):
+        """Create offer details."""
         packages = [
             ("basic", 100, 7),
             ("standard", 250, 5),
@@ -47,11 +52,13 @@ class OfferListTests(APITestCase):
             self.create_offer_detail(offer, offer_type, price, days)
 
     def get_first_offer(self):
+        """Return first offer."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         return response.data["results"][0]
 
     def test_get_empty_offer_list(self):
+        """Test that get empty offer list."""
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -59,6 +66,7 @@ class OfferListTests(APITestCase):
         self.assertEqual(response.data["results"], [])
 
     def test_get_offer_list_with_one_offer(self):
+        """Test that get offer list with one offer."""
         self.create_offer()
 
         response = self.client.get(self.url)
@@ -71,6 +79,7 @@ class OfferListTests(APITestCase):
         )
 
     def test_offer_contains_user_details(self):
+        """Test that offer contains user details."""
         self.create_offer()
 
         user_details = self.get_first_offer()["user_details"]
@@ -80,6 +89,7 @@ class OfferListTests(APITestCase):
         self.assertEqual(user_details["username"], "testbusiness")
 
     def test_offer_contains_details(self):
+        """Test that offer contains details."""
         offer = self.create_offer()
         self.create_offer_details(offer)
 
@@ -88,6 +98,7 @@ class OfferListTests(APITestCase):
         self.assertEqual(len(details), 3)
 
     def test_offer_contains_min_price(self):
+        """Test that offer contains min price."""
         offer = self.create_offer()
         self.create_offer_details(offer)
 
@@ -96,6 +107,7 @@ class OfferListTests(APITestCase):
         self.assertEqual(min_price, 100)
 
     def test_offer_contains_min_delivery_time(self):
+        """Test that offer contains min delivery time."""
         offer = self.create_offer()
         self.create_offer_details(offer)
 
@@ -108,6 +120,7 @@ class OfferCreateTests(APITestCase):
     """Test the offer creation endpoint."""
 
     def setUp(self):
+        """Prepare shared data for this test case."""
         self.user = get_user_model().objects.create_user(
             username="testbusiness",
             password="TestPassword123!"
@@ -121,6 +134,7 @@ class OfferCreateTests(APITestCase):
         self.data = self.get_valid_data()
 
     def get_valid_data(self):
+        """Return valid data."""
         return {
             "title": "Website Design",
             "description": "Professional website design",
@@ -132,6 +146,7 @@ class OfferCreateTests(APITestCase):
         }
 
     def make_detail(self, offer_type, price):
+        """Build detail."""
         return {
             "title": offer_type.title(),
             "revisions": 2,
@@ -142,6 +157,7 @@ class OfferCreateTests(APITestCase):
         }
 
     def test_business_user_can_create_offer(self):
+        """Test that business user can create offer."""
         response = self.client.post(
             self.url, self.data, format="json"
         )
@@ -151,6 +167,7 @@ class OfferCreateTests(APITestCase):
         self.assertEqual(OfferDetail.objects.count(), 3)
 
     def test_response_contains_detail_ids(self):
+        """Test that response contains detail ids."""
         response = self.client.post(
             self.url, self.data, format="json"
         )
@@ -162,6 +179,7 @@ class OfferCreateTests(APITestCase):
             self.assertIn("id", detail)
 
     def test_rejects_incomplete_details(self):
+        """Test that rejects incomplete details."""
         self.data["details"].pop()
 
         response = self.client.post(
@@ -173,6 +191,7 @@ class OfferCreateTests(APITestCase):
         self.assertEqual(OfferDetail.objects.count(), 0)
 
     def test_rejects_duplicate_offer_types(self):
+        """Test that rejects duplicate offer types."""
         self.data["details"][1]["offer_type"] = "basic"
 
         response = self.client.post(
@@ -183,6 +202,7 @@ class OfferCreateTests(APITestCase):
         self.assertEqual(Offer.objects.count(), 0)
 
     def test_customer_cannot_create_offer(self):
+        """Test that customer cannot create offer."""
         self.user.profile.type = "customer"
         self.user.profile.save()
 
@@ -194,6 +214,7 @@ class OfferCreateTests(APITestCase):
         self.assertEqual(Offer.objects.count(), 0)
 
     def test_unauthenticated_user_cannot_create_offer(self):
+        """Test that unauthenticated user cannot create offer."""
         self.client.force_authenticate(user=None)
 
         response = self.client.post(
@@ -208,6 +229,7 @@ class OfferDetailTests(APITestCase):
     """Test retrieving, updating and deleting a single offer."""
 
     def setUp(self):
+        """Prepare shared data for this test case."""
         self.user = get_user_model().objects.create_user(
             username="owner",
             password="TestPassword123!"
@@ -228,6 +250,7 @@ class OfferDetailTests(APITestCase):
         self.client.force_authenticate(user=self.user)
 
     def create_details(self):
+        """Create details."""
         for offer_type, price in [
             ("basic", 100),
             ("standard", 250),
@@ -244,6 +267,7 @@ class OfferDetailTests(APITestCase):
             )
 
     def test_authenticated_user_can_get_offer(self):
+        """Test that authenticated user can get offer."""
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -252,6 +276,7 @@ class OfferDetailTests(APITestCase):
         self.assertEqual(response.data["min_price"], 100)
 
     def test_unauthenticated_user_cannot_get_offer(self):
+        """Test that unauthenticated user cannot get offer."""
         self.client.force_authenticate(user=None)
 
         response = self.client.get(self.url)
@@ -261,6 +286,7 @@ class OfferDetailTests(APITestCase):
         )
 
     def test_get_nonexistent_offer(self):
+        """Test that get nonexistent offer."""
         url = reverse("offer-detail", kwargs={"pk": 99999})
 
         response = self.client.get(url)
@@ -270,6 +296,7 @@ class OfferDetailTests(APITestCase):
         )
 
     def test_owner_can_update_offer(self):
+        """Test that owner can update offer."""
         response = self.client.patch(
             self.url,
             {"title": "Updated Website Design"},
@@ -281,6 +308,7 @@ class OfferDetailTests(APITestCase):
         self.assertEqual(self.offer.title, "Updated Website Design")
 
     def test_owner_can_update_single_detail(self):
+        """Test that owner can update single detail."""
         detail = self.offer.details.get(offer_type="basic")
         original_id = detail.id
 
@@ -299,6 +327,7 @@ class OfferDetailTests(APITestCase):
         self.assertEqual(self.offer.details.count(), 3)
 
     def test_other_user_cannot_update_offer(self):
+        """Test that other user cannot update offer."""
         self.client.force_authenticate(user=self.other_user)
 
         response = self.client.patch(
@@ -312,6 +341,7 @@ class OfferDetailTests(APITestCase):
         )
 
     def test_owner_can_delete_offer(self):
+        """Test that owner can delete offer."""
         response = self.client.delete(self.url)
 
         self.assertEqual(
@@ -323,6 +353,7 @@ class OfferDetailTests(APITestCase):
         self.assertEqual(OfferDetail.objects.count(), 0)
 
     def test_other_user_cannot_delete_offer(self):
+        """Test that other user cannot delete offer."""
         self.client.force_authenticate(user=self.other_user)
 
         response = self.client.delete(self.url)
@@ -339,6 +370,7 @@ class OfferDetailItemTests(APITestCase):
     """Test retrieving a single offer detail."""
 
     def setUp(self):
+        """Prepare shared data for this test case."""
         self.user = get_user_model().objects.create_user(
             username="testuser",
             password="TestPassword123!"
@@ -363,6 +395,7 @@ class OfferDetailItemTests(APITestCase):
         )
 
     def test_authenticated_user_can_get_detail(self):
+        """Test that authenticated user can get detail."""
         self.client.force_authenticate(user=self.user)
 
         response = self.client.get(self.url)
@@ -373,6 +406,7 @@ class OfferDetailItemTests(APITestCase):
         self.assertEqual(response.data["offer_type"], "basic")
 
     def test_unauthenticated_user_cannot_get_detail(self):
+        """Test that unauthenticated user cannot get detail."""
         response = self.client.get(self.url)
 
         self.assertEqual(
@@ -381,6 +415,7 @@ class OfferDetailItemTests(APITestCase):
         )
 
     def test_nonexistent_detail_returns_404(self):
+        """Test that nonexistent detail returns 404."""
         self.client.force_authenticate(user=self.user)
         url = reverse("offer-detail-item", kwargs={"pk": 99999})
 

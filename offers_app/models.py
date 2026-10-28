@@ -1,3 +1,4 @@
+"""Database models for offers and offer packages."""
 from django.conf import settings
 from django.db import models
 
@@ -21,6 +22,7 @@ class Offer(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
+        """Document the   str   behavior."""
         return self.title
 
 
@@ -49,6 +51,7 @@ class OfferDetail(models.Model):
     )
 
     class Meta:
+        """Define model metadata and configuration."""
         constraints = [
             models.UniqueConstraint(
                 fields=["offer", "offer_type"],
@@ -57,5 +60,6 @@ class OfferDetail(models.Model):
         ]
 
     def __str__(self):
+        """Document the   str   behavior."""
         return self.title
     

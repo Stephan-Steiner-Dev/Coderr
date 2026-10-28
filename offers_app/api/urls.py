@@ -1,3 +1,4 @@
+"""URL routes for the offer API."""
 from django.urls import path
 
 from .views import OfferDetailView, OfferListView, OfferDetailItemView

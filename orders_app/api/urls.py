@@ -1,3 +1,4 @@
+"""URL routes for the order API."""
 from django.urls import path
 
 from .views import CompletedOrderCountView, OrderCountView, OrderListCreateView, OrderDetailView

@@ -1,3 +1,4 @@
+"""Database model for user profiles."""
 from django.conf import settings
 from django.db import models
 

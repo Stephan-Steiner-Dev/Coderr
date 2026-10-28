@@ -1,3 +1,4 @@
+"""Tests for review API endpoints."""
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -16,6 +17,7 @@ class ReviewAPITests(APITestCase):
     """Test review endpoints and permissions."""
 
     def setUp(self):
+        """Prepare shared data for this test case."""
         self.customer = User.objects.create_user(
             username='customer',
             password='testpassword123'
@@ -57,6 +59,7 @@ class ReviewAPITests(APITestCase):
         )
 
     def test_list_reviews_authenticated(self):
+        """Test that list reviews authenticated."""
         self.client.force_authenticate(user=self.customer)
 
         response = self.client.get(self.list_url)
@@ -65,6 +68,7 @@ class ReviewAPITests(APITestCase):
         self.assertEqual(len(response.data), 1)
 
     def test_list_reviews_unauthenticated(self):
+        """Test that list reviews unauthenticated."""
         response = self.client.get(self.list_url)
 
         self.assertEqual(
@@ -73,6 +77,7 @@ class ReviewAPITests(APITestCase):
         )
 
     def test_filter_reviews_by_business_user(self):
+        """Test that filter reviews by business user."""
         self.client.force_authenticate(user=self.customer)
 
         response = self.client.get(
@@ -84,6 +89,7 @@ class ReviewAPITests(APITestCase):
         self.assertEqual(len(response.data), 1)
 
     def test_filter_reviews_by_reviewer(self):
+        """Test that filter reviews by reviewer."""
         self.client.force_authenticate(user=self.customer)
 
         response = self.client.get(
@@ -95,6 +101,7 @@ class ReviewAPITests(APITestCase):
         self.assertEqual(len(response.data), 1)
 
     def test_invalid_filter_returns_400(self):
+        """Test that invalid filter returns 400."""
         self.client.force_authenticate(user=self.customer)
 
         response = self.client.get(
@@ -108,6 +115,7 @@ class ReviewAPITests(APITestCase):
         )
 
     def test_create_review(self):
+        """Test that create review."""
         self.client.force_authenticate(user=self.other_customer)
 
         data = {
@@ -129,6 +137,7 @@ class ReviewAPITests(APITestCase):
         )
 
     def test_create_review_unauthenticated(self):
+        """Test that create review unauthenticated."""
         response = self.client.post(
             self.list_url,
             {
@@ -144,6 +153,7 @@ class ReviewAPITests(APITestCase):
         )
 
     def test_business_cannot_create_review(self):
+        """Test that business cannot create review."""
         self.client.force_authenticate(user=self.business)
 
         response = self.client.post(
@@ -161,6 +171,7 @@ class ReviewAPITests(APITestCase):
         )
 
     def test_duplicate_review_forbidden(self):
+        """Test that duplicate review forbidden."""
         self.client.force_authenticate(user=self.customer)
 
         response = self.client.post(
@@ -179,6 +190,7 @@ class ReviewAPITests(APITestCase):
         self.assertEqual(Review.objects.count(), 1)
 
     def test_invalid_rating(self):
+        """Test that invalid rating."""
         self.client.force_authenticate(user=self.other_customer)
 
         response = self.client.post(
@@ -196,6 +208,7 @@ class ReviewAPITests(APITestCase):
         )
 
     def test_review_requires_business_user(self):
+        """Test that review requires business user."""
         self.client.force_authenticate(user=self.other_customer)
 
         response = self.client.post(
@@ -213,6 +226,7 @@ class ReviewAPITests(APITestCase):
         )
 
     def test_update_own_review(self):
+        """Test that update own review."""
         self.client.force_authenticate(user=self.customer)
 
         response = self.client.patch(
@@ -235,6 +249,7 @@ class ReviewAPITests(APITestCase):
         )
 
     def test_cannot_update_other_review(self):
+        """Test that cannot update other review."""
         self.client.force_authenticate(user=self.other_customer)
 
         response = self.client.patch(
@@ -248,6 +263,7 @@ class ReviewAPITests(APITestCase):
         )
 
     def test_cannot_change_business_user(self):
+        """Test that cannot change business user."""
         self.client.force_authenticate(user=self.customer)
 
         response = self.client.patch(
@@ -266,6 +282,7 @@ class ReviewAPITests(APITestCase):
         )
 
     def test_delete_own_review(self):
+        """Test that delete own review."""
         self.client.force_authenticate(user=self.customer)
 
         response = self.client.delete(self.detail_url)
@@ -277,6 +294,7 @@ class ReviewAPITests(APITestCase):
         self.assertEqual(Review.objects.count(), 0)
 
     def test_cannot_delete_other_review(self):
+        """Test that cannot delete other review."""
         self.client.force_authenticate(user=self.other_customer)
 
         response = self.client.delete(self.detail_url)
@@ -288,6 +306,7 @@ class ReviewAPITests(APITestCase):
         self.assertEqual(Review.objects.count(), 1)
 
     def test_update_nonexistent_review(self):
+        """Test that update nonexistent review."""
         self.client.force_authenticate(user=self.customer)
 
         url = reverse(
@@ -303,6 +322,7 @@ class ReviewAPITests(APITestCase):
         )
 
     def test_delete_nonexistent_review(self):
+        """Test that delete nonexistent review."""
         self.client.force_authenticate(user=self.customer)
 
         url = reverse(

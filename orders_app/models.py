@@ -1,3 +1,4 @@
+"""Database model for orders."""
 from django.conf import settings
 from django.db import models
 
@@ -43,7 +44,9 @@ class Order(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        """Define model metadata and configuration."""
         ordering = ["-created_at"]
 
     def __str__(self):
+        """Document the   str   behavior."""
         return f"Order {self.pk}: {self.title}"

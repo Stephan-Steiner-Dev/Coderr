@@ -1,3 +1,4 @@
+"""Serializers for review data and validation."""
 from rest_framework import serializers
 
 from reviews_app.models import Review
@@ -7,6 +8,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     """Serialize and validate reviews."""
 
     class Meta:
+        """Define the fields exposed when serializing reviews."""
         model = Review
         fields = [
             'id',
@@ -45,10 +47,12 @@ class ReviewUpdateSerializer(serializers.ModelSerializer):
     """Allow updating only rating and description."""
 
     class Meta:
+        """Define the fields that can be changed on a review."""
         model = Review
         fields = ['rating', 'description']
 
     def validate_rating(self, value):
+        """Ensure the rating is between 1 and 5."""
         if not 1 <= value <= 5:
             raise serializers.ValidationError(
                 'Rating must be between 1 and 5.'

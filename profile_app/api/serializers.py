@@ -1,3 +1,4 @@
+"""Serializers for user profile data."""
 from django.db import transaction
 from rest_framework import serializers
 
@@ -22,6 +23,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
+        """Define the user profile fields included in responses."""
         model = UserProfile
         fields = [
             'user',
@@ -54,6 +56,7 @@ class ProfileUpdateSerializer(ProfileSerializer):
     )
 
     class Meta(ProfileSerializer.Meta):
+        """Define which profile fields cannot be changed."""
         read_only_fields = [
             'user',
             'username',
@@ -63,6 +66,7 @@ class ProfileUpdateSerializer(ProfileSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        """Update related user fields and profile data atomically."""
         user_data = validated_data.pop('user', {})
 
         for field, value in user_data.items():
@@ -77,6 +81,7 @@ class BusinessProfileSerializer(ProfileSerializer):
     """Serialize public business profile information."""
 
     class Meta(ProfileSerializer.Meta):
+        """Define the public fields for business profiles."""
         fields = [
             'user',
             'username',
@@ -95,6 +100,7 @@ class CustomerProfileSerializer(ProfileSerializer):
     """Serialize public customer profile information."""
 
     class Meta(ProfileSerializer.Meta):
+        """Define the public fields for customer profiles."""
         fields = [
             'user',
             'username',

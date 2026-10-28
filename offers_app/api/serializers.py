@@ -1,3 +1,4 @@
+"""Serializers for offers and offer packages."""
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from django.db.models import Min
@@ -10,6 +11,7 @@ class OfferUserSerializer(serializers.ModelSerializer):
     """Serialize basic information about an offer creator."""
 
     class Meta:
+        """Define the user fields included in offer responses."""
         model = get_user_model()
         fields = [
             "first_name",
@@ -25,10 +27,12 @@ class OfferDetailLinkSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
 
     class Meta:
+        """Define the fields exposed for offer-detail links."""
         model = OfferDetail
         fields = ["id", "url"]
 
     def get_url(self, obj):
+        """Return the URL for the serialized offer detail."""
         return f"/offerdetails/{obj.id}/"
 
 
@@ -50,6 +54,7 @@ class OfferListSerializer(serializers.ModelSerializer):
     min_delivery_time = serializers.IntegerField(read_only=True)
 
     class Meta:
+        """Define the fields included in offer-list responses."""
         model = Offer
         fields = [
             "id",
@@ -70,6 +75,7 @@ class OfferDetailCreateSerializer(serializers.ModelSerializer):
     """Validate offer package data."""
 
     class Meta:
+        """Define the fields accepted for an offer package."""
         model = OfferDetail
         fields = [
             "id",
@@ -96,6 +102,7 @@ class OfferRetrieveSerializer(serializers.ModelSerializer):
     min_delivery_time = serializers.IntegerField(read_only=True)
 
     class Meta:
+        """Define the read-only fields returned for one offer."""
         model = Offer
         fields = [
             "id", "user", "title", "image", "description",
@@ -113,11 +120,13 @@ class OfferUpdateSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
+        """Define the fields accepted when updating an offer."""
         model = Offer
         fields = ["id", "title", "image", "description", "details"]
         read_only_fields = ["id"]
 
     def validate_details(self, details):
+        """Reject duplicate package types in the update data."""
         types = [detail["offer_type"] for detail in details]
         if len(types) != len(set(types)):
             raise serializers.ValidationError(
@@ -127,6 +136,7 @@ class OfferUpdateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        """Update the offer and any supplied package data atomically."""
         details = validated_data.pop("details", [])
         for field, value in validated_data.items():
             setattr(instance, field, value)
@@ -135,6 +145,7 @@ class OfferUpdateSerializer(serializers.ModelSerializer):
         return instance
 
     def update_details(self, offer, details):
+        """Apply package updates to the existing offer packages."""
         for detail_data in details:
             offer_type = detail_data.pop("offer_type")
             detail = offer.details.filter(
@@ -147,6 +158,7 @@ class OfferUpdateSerializer(serializers.ModelSerializer):
             self.update_detail(detail, detail_data)
 
     def update_detail(self, detail, data):
+        """Apply the supplied fields to one offer package."""
         for field, value in data.items():
             setattr(detail, field, value)
         detail.save()
@@ -158,6 +170,7 @@ class OfferCreateSerializer(serializers.ModelSerializer):
     details = OfferDetailCreateSerializer(many=True)
 
     class Meta:
+        """Define the fields accepted when creating an offer."""
         model = Offer
         fields = [
             "id",
@@ -169,6 +182,7 @@ class OfferCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
     def validate_details(self, details):
+        """Require exactly one package of each supported type."""
         types = [detail["offer_type"] for detail in details]
         required = ["basic", "premium", "standard"]
 
@@ -180,6 +194,7 @@ class OfferCreateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        """Create an offer and its packages atomically."""
         details = validated_data.pop("details")
         offer = Offer.objects.create(
             user=self.context["request"].user,

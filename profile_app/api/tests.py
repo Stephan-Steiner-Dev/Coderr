@@ -1,8 +1,15 @@
+"""Tests for profile-related API endpoints and base platform information."""
+
 from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.urls import reverse
+from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
 from profile_app.models import UserProfile
+from reviews_app.models import Review
+from offers_app.models import Offer
 
 
 class ProfileDetailTests(APITestCase):
@@ -150,3 +157,99 @@ class ProfileListTests(APITestCase):
         response = self.client.get('/api/profiles/customer/')
 
         self.assertEqual(response.status_code, 401)
+
+
+class BaseInfoAPITests(APITestCase):
+    """Test public platform statistics."""
+
+    def setUp(self):
+        """Set up customer and business profiles for base-info tests."""
+        self.url = reverse('base-info')
+        self.User = get_user_model()
+
+        self.customer = self.User.objects.create_user(
+            username='base_customer',
+            password='testpassword123'
+        )
+        self.business = self.User.objects.create_user(
+            username='base_business',
+            password='testpassword123'
+        )
+
+        UserProfile.objects.create(
+            user=self.customer,
+            type='customer'
+        )
+        UserProfile.objects.create(
+            user=self.business,
+            type='business'
+        )
+
+    def test_base_info_without_authentication(self):
+        """The base-info endpoint is accessible without authentication."""
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_base_info_without_reviews(self):
+        """A platform with no reviews should return zero metrics."""
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.data['review_count'], 0)
+        self.assertEqual(response.data['average_rating'], 0)
+
+    def test_base_info_review_count(self):
+        """The total review count should reflect created reviews."""
+        Review.objects.create(
+            business_user=self.business,
+            reviewer=self.customer,
+            rating=5,
+            description='Great service!'
+        )
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.data['review_count'], 1)
+
+    def test_base_info_average_rating(self):
+        """Average rating should be computed across all submitted reviews."""
+        second_customer = self.User.objects.create_user(
+            username='second_customer',
+            password='testpassword123'
+        )
+        UserProfile.objects.create(
+            user=second_customer,
+            type='customer'
+        )
+
+        Review.objects.create(
+            business_user=self.business,
+            reviewer=self.customer,
+            rating=4,
+            description='Good service!'
+        )
+        Review.objects.create(
+            business_user=self.business,
+            reviewer=second_customer,
+            rating=5,
+            description='Excellent service!'
+        )
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.data['average_rating'], 4.5)
+
+    def test_base_info_business_profile_count(self):
+        """The response should include the total number of business profiles."""
+        response = self.client.get(self.url)
+
+        self.assertEqual(
+            response.data['business_profile_count'],
+            1
+        )
+
+    def test_base_info_offer_count_without_offers(self):
+        """The offer count should be zero when no offers exist."""
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.data['offer_count'], 0)

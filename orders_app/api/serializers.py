@@ -1,3 +1,4 @@
+"""Serializers for order data and status updates."""
 from rest_framework import serializers
 
 from offers_app.models import OfferDetail
@@ -8,6 +9,7 @@ class OrderSerializer(serializers.ModelSerializer):
     """Serialize order details."""
 
     class Meta:
+        """Define the read-only fields returned for an order."""
         model = Order
         fields = [
             "id",
@@ -32,6 +34,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     offer_detail_id = serializers.IntegerField(min_value=1)
 
     class Meta:
+        """Define the input field used to create an order."""
         model = Order
         fields = ["offer_detail_id"]
 
@@ -40,6 +43,7 @@ class OrderStatusSerializer(serializers.ModelSerializer):
     """Validate order status updates."""
 
     class Meta:
+        """Define the status field accepted for order updates."""
         model = Order
         fields = ["status"]
 

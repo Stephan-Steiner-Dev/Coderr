@@ -1,3 +1,4 @@
+"""API views for offer listing and detail operations."""
 from django.db.models import Min
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -22,16 +23,19 @@ class OfferListView(generics.ListCreateAPIView):
     pagination_class = OfferPagination
 
     def get_serializer_class(self):
+        """Return serializer class."""
         if self.request.method == "POST":
             return OfferCreateSerializer
         return OfferListSerializer
 
     def get_permissions(self):
+        """Return permissions."""
         if self.request.method == "POST":
             return [IsBusinessUser()]
         return [AllowAny()]
 
     def get_queryset(self):
+        """Return queryset."""
         queryset = Offer.objects.select_related("user")
         queryset = queryset.prefetch_related("details")
         queryset = queryset.annotate(
@@ -41,6 +45,7 @@ class OfferListView(generics.ListCreateAPIView):
         return OfferFilters(self.request.query_params).apply(queryset)
 
     def filter_queryset(self, queryset):
+        """Filter by queryset."""
         queryset = super().filter_queryset(queryset)
         ordering = self.request.query_params.get(
             "ordering", "-created_at"
@@ -54,6 +59,7 @@ class OfferDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        """Return queryset."""
         return Offer.objects.select_related("user").prefetch_related(
             "details"
         ).annotate(
@@ -62,11 +68,13 @@ class OfferDetailView(generics.RetrieveUpdateDestroyAPIView):
         )
 
     def get_serializer_class(self):
+        """Return serializer class."""
         if self.request.method in ("PATCH", "PUT"):
             return OfferUpdateSerializer
         return OfferRetrieveSerializer
 
     def get_object(self):
+        """Return object."""
         offer = super().get_object()
         if self.request.method in ("PATCH", "PUT", "DELETE"):
             if not IsOfferOwner().has_object_permission(

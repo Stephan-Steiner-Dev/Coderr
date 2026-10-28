@@ -1,3 +1,4 @@
+"""API views for registration and login."""
 from django.db import transaction
 
 from rest_framework import generics, status
