@@ -126,8 +126,15 @@ class OfferUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
     def validate_details(self, details):
-        """Reject duplicate package types in the update data."""
-        types = [detail["offer_type"] for detail in details]
+        """Validate package types in the update data."""
+        types = []
+        for detail in details:
+            offer_type = detail.get("offer_type")
+            if offer_type is None:
+                raise serializers.ValidationError(
+                    "Each detail requires an offer_type."
+                )
+            types.append(offer_type)
         if len(types) != len(set(types)):
             raise serializers.ValidationError(
                 "Each offer type may only appear once."

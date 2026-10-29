@@ -20,18 +20,17 @@ class IsOrderBusinessOrStaff(BasePermission):
     """Allow assigned business users to update and staff to delete."""
 
     def has_permission(self, request, view):
-        """Allow order updates to business users and deletion to staff."""
+        """Require staff permissions for deletion."""
         if request.method == "DELETE":
             return request.user.is_staff
+        return True
 
+    def has_object_permission(self, request, view, obj):
+        """Check permission for the requested order."""
+        if request.method == "DELETE":
+            return request.user.is_staff
         return (
             hasattr(request.user, "profile")
             and request.user.profile.type == "business"
+            and obj.business_user == request.user
         )
-
-    def has_object_permission(self, request, view, obj):
-        """Check that the user may modify or delete this order."""
-        if request.method == "DELETE":
-            return request.user.is_staff
-
-        return obj.business_user == request.user

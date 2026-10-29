@@ -72,14 +72,33 @@ python -m pip install -r requirements.txt
 
 ### 4. Configure environment variables
 
-Create a `.env` file in the project root directory
-(next to `manage.py`) and add:
+Copy the `.env.example` file to `.env` in the project root (next to `manage.py`).
 
-```dotenv
-DJANGO_SECRET_KEY=your-secret-key-here
+**Windows (PowerShell):**
+
+```powershell
+Copy-Item .env.example .env
 ```
 
-Never commit your `.env` file or secret keys to Git.
+**macOS / Linux:**
+
+```bash
+cp .env.example .env
+```
+
+Generate a Django secret key:
+
+```bash
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+Open `.env` and replace the placeholder with your generated secret key:
+
+```env
+DJANGO_SECRET_KEY=your-generated-secret-key
+```
+
+Never commit the `.env` file to Git.
 
 ### 5. Apply database migrations
 
